@@ -1,0 +1,252 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>글로벌 리밸런싱 × 애플 가격인상</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;700;900&display=swap');
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body {
+    background: #111;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    font-family: 'Noto Sans KR', sans-serif;
+  }
+  .card {
+    width: 390px;
+    height: 844px;
+    background: #0a0a0a;
+    position: relative;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    padding: 32px 24px 24px;
+    gap: 10px;
+  }
+  .bg-circle {
+    position: absolute;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+  .bg-circle-1 {
+    width: 280px; height: 280px;
+    top: -70px; right: -70px;
+    background: radial-gradient(circle, rgba(255,80,0,0.18) 0%, transparent 70%);
+  }
+  .bg-circle-2 {
+    width: 220px; height: 220px;
+    bottom: 20px; left: -50px;
+    background: radial-gradient(circle, rgba(0,180,255,0.10) 0%, transparent 70%);
+  }
+
+  /* 상단 태그 */
+  .top-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(255,255,255,0.07);
+    border: 1px solid rgba(255,255,255,0.12);
+    border-radius: 20px;
+    padding: 5px 12px;
+    width: fit-content;
+  }
+  .dot {
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: #FF5000;
+    animation: pulse 1.4s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+  .top-tag span {
+    font-size: 9px;
+    color: rgba(255,255,255,0.5);
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+  }
+
+  /* 헤드라인 */
+  .headline {
+    font-size: 24px;
+    font-weight: 900;
+    color: #fff;
+    line-height: 1.25;
+    letter-spacing: -0.5px;
+  }
+  .headline .accent { color: #FF5000; }
+  .subline {
+    font-size: 11px;
+    color: rgba(255,255,255,0.38);
+    margin-top: -4px;
+  }
+
+  /* 스텝 */
+  .flow { display: flex; flex-direction: column; gap: 7px; }
+  .step {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 12px;
+    padding: 11px 13px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+  }
+  .step.highlight {
+    background: rgba(255,80,0,0.08);
+    border-color: rgba(255,80,0,0.25);
+  }
+  .step-icon { font-size: 17px; flex-shrink: 0; margin-top: 1px; }
+  .step-label {
+    font-size: 8px;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.3);
+    margin-bottom: 2px;
+  }
+  .step-title {
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #fff;
+    margin-bottom: 2px;
+    line-height: 1.3;
+  }
+  .step-desc {
+    font-size: 10.5px;
+    color: rgba(255,255,255,0.52);
+    line-height: 1.5;
+  }
+  .step-desc b { color: rgba(255,200,160,0.9); font-weight: 700; }
+  .arrow { text-align: center; color: rgba(255,80,0,0.45); font-size: 12px; margin: -2px 0; }
+
+  /* 결론 */
+  .conclusion {
+    background: linear-gradient(135deg, rgba(255,80,0,0.13), rgba(255,140,0,0.07));
+    border: 1px solid rgba(255,100,0,0.28);
+    border-radius: 13px;
+    padding: 11px 14px;
+  }
+  .conclusion-label {
+    font-size: 8px;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+    color: #FF7A30;
+    margin-bottom: 5px;
+  }
+  .conclusion-text {
+    font-size: 11.5px;
+    color: rgba(255,255,255,0.82);
+    line-height: 1.55;
+  }
+  .conclusion-text strong { color: #fff; font-weight: 700; }
+
+  /* 인사이트 칩 */
+  .insight-row { display: flex; gap: 7px; }
+  .insight-chip {
+    flex: 1;
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(255,255,255,0.08);
+    border-radius: 11px;
+    padding: 9px 8px;
+    text-align: center;
+  }
+  .i-emoji { font-size: 14px; margin-bottom: 3px; }
+  .i-label { font-size: 8px; color: rgba(255,255,255,0.3); letter-spacing: 0.6px; text-transform: uppercase; margin-bottom: 2px; }
+  .i-val { font-size: 10.5px; font-weight: 700; color: rgba(255,255,255,0.82); line-height: 1.3; }
+  .insight-chip.warn .i-val { color: #FF6B6B; }
+  .insight-chip.ok .i-val { color: #4DE8A0; }
+
+  /* 푸터 */
+  .footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-top: auto;
+  }
+  .footer-left { font-size: 9px; color: rgba(255,255,255,0.22); line-height: 1.5; }
+  .badge {
+    background: rgba(255,80,0,0.15);
+    border: 1px solid rgba(255,80,0,0.3);
+    border-radius: 20px;
+    padding: 4px 11px;
+    font-size: 9px;
+    font-weight: 700;
+    color: #FF7A30;
+  }
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="bg-circle bg-circle-1"></div>
+  <div class="bg-circle bg-circle-2"></div>
+
+  <div class="top-tag">
+    <div class="dot"></div>
+    <span>오늘의 경제 · 2026.06.26</span>
+  </div>
+
+  <div>
+    <div class="headline">글로벌 리밸런싱이<br>내 <span class="accent">애플 제품</span> 가격을<br>올렸다?</div>
+
+  </div>
+
+  <div class="flow">
+    <div class="step">
+      <div class="step-icon">🤖</div>
+      <div>
+        <div class="step-label">STEP 1 · 발단</div>
+        <div class="step-title">AI 데이터센터가 메모리를 싹쓸이</div>
+        <div class="step-desc">AI 붐으로 데이터센터가 폭발적으로 늘며 <b>메모리 가격 3분기 만에 4배↑</b>. 엔비디아 AI 칩 서버 1대 = 맥북 14,500대 분량의 메모리!</div>
+      </div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="step">
+      <div class="step-icon">⚖️</div>
+      <div>
+        <div class="step-label">STEP 2 · 리밸런싱</div>
+        <div class="step-title">글로벌 자원 배분이 재편된다</div>
+        <div class="step-desc"><b>글로벌 리밸런싱</b> = 전 세계 돈·자원·공급망이 새 수요에 맞춰 재배치. AI가 반도체를 독점하자 일반 전자기기 제조사는 부품 확보 전쟁에 내몰림.</div>
+      </div>
+    </div>
+    <div class="arrow">↓</div>
+    <div class="step highlight">
+      <div class="step-icon">🍎</div>
+      <div>
+        <div class="step-label">STEP 3 · 오늘의 뉴스</div>
+        <div class="step-title">애플, 맥북·아이패드 최대 300달러 인상</div>
+        <div class="step-desc">팀 쿡 "40년 경력에 이런 상황은 처음." 맥북 에어 <b>+200달러↑</b>, 아이패드 프로 <b>+200달러↑</b>. 애플 주가 당일 <b>6% 급락.</b></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="conclusion">
+    <div class="conclusion-label">💡 초보 투자자가 알아야 할 핵심</div>
+    <div class="conclusion-text">AI 투자 붐 → 반도체 부족 → 제품 가격 인상 → <strong>소비자 지갑 타격</strong>. <strong>마이크론·삼성·SK하이닉스</strong>엔 호재, 애플·MS엔 단기 악재!</div>
+  </div>
+
+  <div class="insight-row">
+    <div class="insight-chip warn">
+      <div class="i-emoji">📉</div>
+      <div class="i-label">주의</div>
+      <div class="i-val">애플·MS<br>완성품 업체</div>
+    </div>
+    <div class="insight-chip ok">
+      <div class="i-emoji">📈</div>
+      <div class="i-label">수혜</div>
+      <div class="i-val">마이크론<br>삼성·SK하이닉스</div>
+    </div>
+    <div class="insight-chip">
+      <div class="i-emoji">👀</div>
+      <div class="i-label">다음 변수</div>
+      <div class="i-val">9월<br>아이폰 가격?</div>
+    </div>
+  </div>
+
+  <div class="footer">
+    <div class="footer-left">※ 투자 참고용 정보입니다.<br>개인 투자 판단은 본인 책임입니다.</div>
+    <div class="badge">💡쉬운 경제읽기</div>
+  </div>
+</div>
+</body>
+</html>

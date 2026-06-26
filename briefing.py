@@ -33,9 +33,11 @@ def load_config():
         "TELEGRAM_TOKEN": os.environ.get("TELEGRAM_TOKEN", ""),
         "TELEGRAM_CHAT_ID": os.environ.get("TELEGRAM_CHAT_ID", "8552510154"),
         "GEMINI_API_KEY": os.environ.get("GEMINI_API_KEY", ""),
+        "RUN_TOKEN": os.environ.get("RUN_TOKEN", ""),
     }
-    if os.path.exists("secrets.json"):
-        with open("secrets.json", encoding="utf-8") as f:
+    secrets_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), "secrets.json")
+    if os.path.exists(secrets_path):
+        with open(secrets_path, encoding="utf-8") as f:
             local = json.load(f)
             for k in config:
                 if not config[k] and k in local:
@@ -204,15 +206,29 @@ def send_telegram(token, chat_id, text):
     print("텔레그램 전송 성공")
 
 
-def main():
-    config = load_config()
+def extract_topic_from_url(url, api_key):
+    try:
+        resp = requests.get(url, timeout=10, headers={"User-Agent": "Mozilla/5.0"})
+        text = strip_html(resp.text)[:3000]
+    except Exception as e:
+        print(f"URL fetch 실패: {e}")
+        return None
+
+    client = genai.Client(api_key=api_key)
+    result = client.models.generate_content(
+        model="gemini-2.5-flash",
+        contents=f"다음 기사에서 핵심 경제/재테크 이슈 키워드를 한 줄(15자 이내)로 추출해줘:\n\n{text}",
+    )
+    return result.text.strip()
+
+
+def run_briefing(config):
     now = datetime.now(KST)
     today_str = f"{now.month}월 {now.day}일({WEEKDAYS[now.weekday()]})"
     time_str = now.strftime("%H:%M")
 
     print(f"뉴스 수집 중... ({today_str} {time_str})")
     all_news, hot_topics = collect_news(config)
-
     news_text = format_for_gemini(all_news)
 
     print("브리핑 생성 중 (Gemini 2.5 Flash)...")
@@ -227,8 +243,44 @@ def main():
         f.write(briefing)
     print(f"파일 저장: {output}")
 
-    print("텔레그램 전송 중...")
     send_telegram(config["TELEGRAM_TOKEN"], config["TELEGRAM_CHAT_ID"], briefing)
+
+
+def run_card(config, topic=None, source_url=None):
+    from card import generate_card_html, save_card_html
+
+    now = datetime.now(KST)
+    today_date = now.strftime("%Y.%m.%d")
+
+    # URL에서 주제 추출
+    if source_url:
+        print(f"URL 분석 중: {source_url}")
+        topic = extract_topic_from_url(source_url, config["GEMINI_API_KEY"])
+        print(f"추출된 주제: {topic}")
+
+    # 주제가 있으면 해당 주제로 뉴스 검색, 없으면 핫토픽 자동 선정
+    if topic:
+        try:
+            news_items = naver_search(topic, config["NAVER_CLIENT_ID"], config["NAVER_CLIENT_SECRET"])
+        except Exception as e:
+            print(f"뉴스 검색 실패: {e}")
+            news_items = []
+    else:
+        all_news, hot_topics = collect_news(config)
+        topic = hot_topics[0] if hot_topics else "경제 이슈"
+        news_items = all_news.get(topic, [])
+
+    print(f"카드뉴스 생성 중 ({topic})...")
+    card_html = generate_card_html(topic, news_items, today_date, config["GEMINI_API_KEY"])
+    url = save_card_html(card_html)
+
+    send_telegram(config["TELEGRAM_TOKEN"], config["TELEGRAM_CHAT_ID"], f"📊 오늘의 카드뉴스\n{url}")
+    print(f"카드뉴스 전송 완료: {url}")
+
+
+def main():
+    config = load_config()
+    run_briefing(config)
 
 
 if __name__ == "__main__":
